@@ -15,3 +15,4 @@ Data is publically available at [FHWA](https://www.fhwa.dot.gov/bridge/nbi/ascii
 
 ## Example of the optimization running
 <img src="https://raw.githubusercontent.com/gasrg/Bridge-Repair-Optimization/master/Example_Outputs/example_output.gif">
+![Example Output](Example_Outputs/example_output.gif)
