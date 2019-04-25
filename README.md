@@ -14,5 +14,5 @@ Data is publically available at [FHWA](https://www.fhwa.dot.gov/bridge/nbi/ascii
 `python3 Model.py`
 
 ## Example of the optimization running
-<img src="https://raw.githubusercontent.com/gasrg/Bridge-Repair-Optimization/master/Example_Outputs/example_output.gif">
+<img src="https://github.com/gasrg/Bridge-Repair-Optimization/blob/master/Example_Outputs/example_output.gif">
 ![Example Output](https://github.com/gasrg/Bridge-Repair-Optimization/blob/master/Example_Outputs/example_output.gif)
