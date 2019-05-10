@@ -1,20 +1,18 @@
 import csv
 import logging
 import math
+import os.path
 import random
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.style.use("ggplot")
-
-logging.getLogger().setLevel(logging.DEBUG)
-
-random.seed(10)
-
 
 class Model:
-    def __init__(self):
+    def __init__(self, ga_max_epochs, ga_population_size):
+        """
+        Initiates the model by reading the data in MO17.csv and declaring the variables.
+        """
         logging.info("Initiating the model.")
         # initiate the lists that will hold the data
         self.cond = []
@@ -25,11 +23,13 @@ class Model:
         cond_superstructure = []
         cond_substructure = []
         cond_deck = []
+        # Read the data from the csv
         logging.info("Reading the csv.")
         csv_filename = "MO17.csv"
-        with open(csv_filename) as csv_file:
+        csv_path = os.path.join(os.path.dirname(__file__), csv_filename)
+        with open(csv_path) as csv_file:
             csv_reader = csv.reader(csv_file)
-            next(csv_reader)  # Skip the header
+            next(csv_reader)  # Skip the header row
             for row in csv_reader:
                 self.ADT.append(int(row[1]))
                 self.length.append(float(row[2]))
@@ -38,7 +38,7 @@ class Model:
                 cond_superstructure.append(row[5])
                 cond_substructure.append(row[6])
         self.numberOfBridges = len(self.ADT)
-        # Make sure that all the lengths are equal
+        # Make sure that all the lengths of the arrays are equal otherwise raise an Exception
         if not all(self.numberOfBridges == len(x) for x in (
                 self.ADT,
                 self.length,
@@ -51,12 +51,14 @@ class Model:
         # Calculate the maximum ADT
         self.maxADT = max(self.ADT)
         # Calculate the conditions
-        self.cond = []  # Reset the conditions
+        self.cond = []
+        # Reset the conditions
         for deck, sup, sub in zip(
                 cond_deck,
                 cond_superstructure,
                 cond_substructure
         ):
+            # Some conditions have an "N", for not applicable
             if any("N" in x for x in (deck, sup, sub)):
                 self.cond.append("N")
             else:
@@ -73,9 +75,9 @@ class Model:
         self.ga_population = []
         self.ga_scores = []
         self.ga_costs = []
-        self.ga_population_size = 200
+        self.ga_population_size = ga_population_size
         self.ga_mutation_rate = 0.20
-        self.ga_max_epochs = 1000
+        self.ga_max_epochs = ga_max_epochs
 
         # used for plotting later
         self.ga_plot_epochs = []
@@ -107,7 +109,7 @@ class Model:
         # self.maximum_repair_cost = 20000000
         self.maximum_repair_cost = 13500000
 
-    def evaluate_repair(self, repair: [int]):
+    def evaluate_repair(self, repair):
         """
         Evaluate a repair plan represented as a list of ints
         :type repair: list[int]
@@ -156,13 +158,17 @@ class Model:
         return total_score, total_cost
 
     def ga_run(self):
+        """
+        Runs the GA
+        :return: none
+        """
         logging.info("Running GA")
         # check that the minimum budget can ever be met
         logging.info("Initializing population...")
         while len(self.ga_population) < self.ga_population_size:
             self.ga_add_generated_repair()
             logging.debug("{}/{}".format(len(self.ga_population), self.ga_population_size))
-        plt.ion()
+        # plt.ion()  # Make plt interactiwe
         for epoch in range(self.ga_max_epochs + 1):
             logging.info("Epoch {}: max score = {} with budget {}".format(
                 epoch,
@@ -188,49 +194,80 @@ class Model:
             plt.title("GA Optimization")
             plt.xlabel("Epoch #")
             plt.ylabel("Score")
-            plt.pause(0.001)
+            plt.pause(0.05)
 
     def ga_add_generated_repair(self):
-        """Generate a new repair"""
+        """
+        Generate a new repair
+        """
         while True:
+            # Generate a random repair
             new_repair = [random.choice(self.repair_constraints[c]) for c in self.cond]
+            # Evaluatate it
             ev = self.evaluate_repair(new_repair)
-            if ev is not False:
+            if ev is not False:  # If the repair plan is valid add it to the list
                 self.ga_population.append(new_repair)
                 self.ga_scores.append(ev[0])
                 self.ga_costs.append(ev[1])
-                return 0
+                return 0  # Break the loop and whole function
 
     def ga_kill_one_weak(self):
-        """kills one weak"""
+        """
+        kills one weak
+        """
+        # Get the weakest one
         index = self.ga_scores.index(min(self.ga_scores))
+        # Delete it
         self.ga_scores.pop(index)
+        # Delete its input
         self.ga_population.pop(index)
 
     def ga_add_one_cross_over(self):
+        """
+        Make one cross-over
+        """
         while True:
+            # Get 2 random parents
             parent_one_index = random.randint(0, len(self.ga_population) - 1)
             parent_two_index = random.randint(0, len(self.ga_population) - 1)
+            # Make sure they are not the same parent
             if parent_one_index == parent_two_index:
                 continue
+            # Initiate the child
             child_repair = []
+            # Add a random gene from each one if the two parents into the child's chromosome
             for i in range(self.numberOfBridges):
                 child_repair.append(random.choice([
                     self.ga_population[parent_one_index][i],
                     self.ga_population[parent_two_index][i]
                 ]))
+            # Evaluate the child
             ev = self.evaluate_repair(child_repair)
-            if ev is not False:
+            if ev is not False:  # If the repair is valid, append it to the lists
                 self.ga_population.append(child_repair)
                 self.ga_scores.append(ev[0])
                 self.ga_costs.append(ev[1])
-                return 0
+                return 0  # Exit the loop and the function
             else:
                 logging.debug("child is invalid")
 
 
 if __name__ == "__main__":
-    model = Model()
+    # Change the plotting style
+    plt.style.use("ggplot")
+    # Set the logger to debugging mode
+    logging.getLogger().setLevel(logging.DEBUG)
+    # Set the random seed for repeatability
+    random.seed(10)
+    # Max number of epochs for the GA (This is the stopping criteria)
+    ga_max_epochs = 1000
+    # The population size for the GA
+    ga_population_size = 50
+    # Initiate the model
+    model = Model(ga_max_epochs, ga_population_size)
+    # Start the GA in the model
     model.ga_run()
+    # Save the figure
     plt.savefig("plot.png")
+    # Wait for user input to exit
     input("Done! Press anything to continue...")
