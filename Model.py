@@ -1,8 +1,8 @@
 import csv
 import logging
+import math
 import random
 
-import math
 import matplotlib.pyplot as plt
 import numpy as np
 

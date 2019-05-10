@@ -11,7 +11,9 @@ It is assumed that there are three type of repair for a bridge: (1) light, (2) m
 Data is publically available at [FHWA](https://www.fhwa.dot.gov/bridge/nbi/ascii.cfm). [This report](https://www.fhwa.dot.gov/bridge/mtguide.pdf) is also needed to understand the codes used in the NBI.
 
 ## How to run
-`python3 Model.py`
+1. Install dependencies: `pip install matplotlib numpy`
+
+2. Run the model in python: `python Model.py`
 
 ## Example of the optimization running
-<img src="https://github.com/gasrg/Bridge-Repair-Optimization/blob/master/Example_Outputs/example_output.gif">
+![Output GIF](Example_Outputs/example_output.gif)
